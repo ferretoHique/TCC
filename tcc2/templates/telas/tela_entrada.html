@@ -1,7 +1,71 @@
-<!DOCTYPE html>
-<html>
-<body>
-    <p>Hi there!</p>
-    <p>It works!</p>
-</body>
-</html>
+{% extends 'telas/base.html' %}
+{% block content %}
+    <title>Tela de Entrada</title>
+    <form class="form">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 col-lg-4"></div>
+            <div class="col-sm-12 col-md-4 col-lg-4 alinhaC">
+                <i class="bi bi-mic-fill" id="botaoGravar" style="font-size: 30px;"></i>
+                <audio id="audioPlayback" controls></audio>
+            </div>
+            <div class="col-sm-12 col-md-12 col-lg-12 alinhaC">
+                <button class="btn btn-primary">Transformar</button>
+            </div>
+        </div>        
+    </form>
+
+    <form class="form">
+        <div class="row">
+            <div class="col-sm-12 col-md-2 col-lg-2"></div>
+            <div class="col-sm-12 col-md-8 col-lg-8">
+                <textarea placeholder="Digite o texto do seu laudo aqui" name="texto_laudo" style="width: 100%; min-height: 500px"></textarea>
+            </div>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12 alinhaC">
+            <button class="btn btn-success">Enviar</button>
+            <button class="btn btn-danger">Limpar</button>
+        </div>
+    </form>
+    <script>
+        const botaoGravar = document.getElementById('botaoGravar');
+        const audioPlayback = document.getElementById('audioPlayback');
+    
+        let mediaRecorder;
+        let taGravando = false;
+        let audioChunks = [];
+    
+        botaoGravar.addEventListener('click', async () => {
+            if (!taGravando) {
+                taGravando = true;
+                // Solicitar permissão para acessar o microfone
+                const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    
+                // Inicializar MediaRecorder com o stream de áudio
+                mediaRecorder = new MediaRecorder(stream);
+    
+                // Iniciar a gravação
+                mediaRecorder.start();
+    
+                // Quando um novo pedaço de áudio estiver disponível, salvá-lo
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+    
+                // Quando a gravação parar, criar um blob com o áudio gravado
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, {type: 'audio/mpeg'});
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioUrl;
+    
+                    // Limpar os chunks para futuras gravações
+                    audioChunks = [];
+                };
+            } else {
+                taGravando = false;
+                // Parar a gravação
+                mediaRecorder.stop();
+            }
+        });
+    </script>
+
+{% endblock %}

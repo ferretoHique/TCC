@@ -1,0 +1,26 @@
+.alinhaC {
+    text-align: center;
+}
+
+.alinhaD {
+    text-align: right;
+}
+
+.alinhaE {
+    text-align: left ;
+}
+
+.form {
+    margin: 2rem;
+}
+
+.cabecalho-telas {
+    background: #198754;
+    height: 3rem;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+    font-family: roboto-bold;
+}

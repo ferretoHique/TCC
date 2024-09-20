@@ -1,0 +1,22 @@
+{% extends 'telas/base.html' %}
+{% block content %}
+    <title>Tela de Edição</title>
+    <div class="row">
+        <div class="col-sm-12 col-md-12 col-lg-12">
+            <i class="bi bi-arrow-left" style="font-size: 26px;"></i>
+        </div>            
+    </div>
+
+    <form class="form">
+        <div class="row">
+            <div class="col-sm-12 col-md-2 col-lg-2"></div>
+            <div class="col-sm-12 col-md-8 col-lg-8">
+                <textarea placeholder="Edite o texto do seu laudo aqui" name="texto_laudo" style="width: 100%; min-height: 500px"></textarea>
+            </div>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-12 alinhaC">
+            <button class="btn btn-success">Enviar</button>
+            <button class="btn btn-danger">Cancelar</button>
+        </div>
+    </form>
+{% endblock %}
