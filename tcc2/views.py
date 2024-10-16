@@ -52,7 +52,9 @@ def audio_to_text(request):
         
         with open(audio_path, 'wb+') as destination:
             for chunk in audio_file.chunks():
-                destination.write(chunk)  
+                destination.write(chunk)
+
+        AudioSegment.from_file(audio_path).export(audio_path, format='wav')
         # Usar SpeechRecognition para converter o áudio em texto
         recognizer = sr.Recognizer()
 
