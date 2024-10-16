@@ -1,43 +1,50 @@
 {% extends 'telas/base.html' %}
 {% block content %}
   <title>Tela de Entrada</title>
-  <form class="form">
+
+  <!-- Formulário para gravação e envio de áudio -->
+  <form class="form" method="POST">
     <div class="row">
       <div class="col-sm-12 col-md-4 col-lg-4"></div>
       <div class="col-sm-12 col-md-4 col-lg-4 alinhaC">
-        <i class="bi bi-mic-fill" id="botaoGravar" style="font-size: 30px;"></i>
-        <audio id="audioPlayback" controls></audio>
+        <!-- Botão para iniciar/parar gravação de áudio -->
+        <i class="bi bi-mic-fill" id="botaoGravar" style="font-size: 30px; cursor: pointer;"></i>
+        <!-- Player para reprodução do áudio gravado -->
+        <audio id="audioPlayback" name="testessom" controls></audio>
       </div>
       <div class="col-sm-12 col-md-12 col-lg-12 alinhaC">
-        <button class="btn btn-primary">Transformar</button>
+        <!-- Botão para converter o áudio em texto (comportamento gerenciado por JavaScript) -->
+        <button type="button" class="btn btn-primary" id="botaoTransformar" disabled>Transformar</button>
       </div>
     </div>
   </form>
 
+  <!-- Formulário de texto do laudo -->
   <form class="form">
     <div class="row">
       <div class="col-sm-12 col-md-2 col-lg-2"></div>
       <div class="col-sm-12 col-md-8 col-lg-8">
-        <textarea placeholder="Digite o texto do seu laudo aqui" name="texto_laudo" style="width: 100%; min-height: 500px"></textarea>
+        <textarea placeholder="Digite o texto do seu laudo aqui" name="texto_laudo" id="textoLaudo" style="width: 100%; min-height: 500px"></textarea>
       </div>
     </div>
     <div class="col-sm-12 col-md-12 col-lg-12 alinhaC">
-      <button class="btn btn-success">Enviar</button>
-      <button class="btn btn-danger">Limpar</button>
+      <button class="btn btn-success" type="submit">Enviar</button>
+      <button class="btn btn-danger" type="reset">Limpar</button>
     </div>
   </form>
+
   <script>
-    const botaoGravar = document.getElementById('botaoGravar')
-    
-    let mediaRecorder
-    let taGravando = false
-    let audioChunks = []
+    var botaoGravar = document.getElementById('botaoGravar')
+    var botaoTransformar = document.getElementById('botaoTransformar')
+    var mediaRecorder
+    var taGravando = false
+    var audioChunks = []
     
     botaoGravar.addEventListener('click', async () => {
       if (!taGravando) {
         taGravando = true
-        // Solicitar permissão para acessar o microfone
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        botaoGravar.style.color = 'red' // Muda cor do ícone para indicar que está gravando
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     
         // Inicializar MediaRecorder com o stream de áudio
         mediaRecorder = new MediaRecorder(stream)
@@ -50,36 +57,44 @@
     
         // Iniciar a gravação
         mediaRecorder.start()
-    
-        // Quando a gravação parar, criar um blob com o áudio gravado
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
-          const audioUrl = URL.createObjectURL(audioBlob)
-          $('#audioPlayback').attr('src', audioUrl)
-    
-          // Enviar o áudio para o servidor
-          enviarAudio(audioBlob)
-        }
       } else {
         taGravando = false
-        // Parar a gravação
+        botaoGravar.style.color = '' // Volta à cor original
         mediaRecorder.stop()
+      }
+    
+      // Quando a gravação parar, criar um blob com o áudio gravado
+      mediaRecorder.onstop = () => {
+        var audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
+        var audioUrl = URL.createObjectURL(audioBlob)
+        $('#audioPlayback').attr('src', audioUrl)
+    
+        // Habilitar o botão "Transformar" depois da gravação
+        botaoTransformar.disabled = false
+    
+        // Enviar o áudio para o servidor ao clicar em "Transformar"
+        botaoTransformar.addEventListener('click', function () {
+          enviarAudio(audioBlob)
+        })
       }
     })
     
     // Função para enviar o áudio via jQuery AJAX
     function enviarAudio(audioBlob) {
-      const formData = new FormData()
+      var formData = new FormData()
       formData.append('audio', audioBlob, 'gravacao.wav')
-      debugger
+      console.log('FormData:', formData.get('audio'))
+    
       $.ajax({
-        url: '/quick_report/audio_to_text', // Altere para a rota correta do seu servidor
+        url: '/quick_report/audio_to_text',
         type: 'POST',
         data: formData,
         processData: false, // Necessário para não processar o arquivo
         contentType: false, // Necessário para o jQuery não adicionar cabeçalhos
         success: function (response) {
           console.log('Áudio enviado com sucesso:', response)
+          // Exibir o texto transcrito no textarea
+          $('#textoLaudo').val(response.text)
         },
         error: function (jqXHR, textStatus, errorThrown) {
           console.error('Erro ao enviar o áudio:', textStatus, errorThrown)

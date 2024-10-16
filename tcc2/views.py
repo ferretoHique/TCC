@@ -5,6 +5,11 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+import os
+import speech_recognition as sr
+from django.conf import settings
+from django.http import JsonResponse
+from pydub import AudioSegment
 
 
 def login_view(request):
@@ -40,7 +45,33 @@ def tela_entrada(request):
 
 @login_required
 def audio_to_text(request):
-    return render(request, 'ainnn')
+    if request.method == 'POST' and 'audio' in request.FILES:
+        # Receber o arquivo de áudio enviado
+        audio_file = request.FILES['audio']
+        audio_path = os.path.join(settings.MEDIA_ROOT, audio_file.name)
+        
+        with open(audio_path, 'wb+') as destination:
+            for chunk in audio_file.chunks():
+                destination.write(chunk)  
+        # Usar SpeechRecognition para converter o áudio em texto
+        recognizer = sr.Recognizer()
+
+        try:
+            # Abrir o arquivo de áudio salvo
+            with sr.AudioFile(audio_path) as source:
+                audio_data = recognizer.record(source)  # Lê o conteúdo do áudio
+                # Converter o áudio em texto usando a Google Web Speech API
+                text = recognizer.recognize_google(audio_data, language='pt-BR')  # Para português
+                return JsonResponse({'message': 'Áudio transcrito com sucesso!', 'text': text})
+
+        except sr.UnknownValueError:
+            return JsonResponse({'error': 'Não foi possível entender o áudio.'}, status=400)
+        except sr.RequestError as e:
+            return JsonResponse({'error': f'Erro ao conectar ao serviço de reconhecimento: {e}'}, status=500)
+        except Exception as e:
+            return JsonResponse({'error': f'Erro ao processar o áudio: {e}'}, status=500)
+
+    return JsonResponse({'error': 'Nenhum arquivo de áudio foi enviado.'}, status=400)
 
 
 @login_required
